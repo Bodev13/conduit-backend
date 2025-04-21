@@ -1,0 +1,9 @@
+node_modules
+*.log
+*.env
+dist
+build
+__pycache__
+*.pyc
+.vscode
+.idea

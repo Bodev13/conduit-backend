@@ -9,24 +9,53 @@ https://docs.djangoproject.com/en/1.10/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
-
+import environ
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env.bool("DEBUG", default=False)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '2^f+3@v7$v1f8yt0!s)3-1t$)tlp+xm17=*g))_xoi&&9m#2a&'
+SECRET_KEY = env("SECRET_KEY")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#CORS_ORIGIN_WHITELIST = (
+#    '0.0.0.0:8282',
+#    'localhost:8282',
+#)
 
-ALLOWED_HOSTS = []
+#FRONTEND_URL = env("FRONTEND_URL", default="localhost")
+#FRONTEND_PORT = env("FRONTEND_PORT", default=8080)
 
+#CORS_ORIGIN_WHITELIST = (f"http://{FRONTEND_URL}:{FRONTEND_PORT}")
+
+
+
+FRONTEND_URLS = env("FRONTEND_URL", default="localhost").split(',')
+FRONTEND_PORT = env("FRONTEND_PORT", default="8282")
+
+CORS_ORIGIN_WHITELIST = tuple(
+    f"http://{url.strip()}:{FRONTEND_PORT}" for url in FRONTEND_URLS
+)
+print("CORS_ORIGIN_WHITELIST:", CORS_ORIGIN_WHITELIST)
+
+
+
+
+DJANGO_SUPERUSER_USERNAME = env(
+    'DJANGO_SUPERUSER_USERNAME', default='admin_default')
+DJANGO_SUPERUSER_EMAIL = env(
+    'DJANGO_SUPERUSER_EMAIL', default='admin@example.com')
+DJANGO_SUPERUSER_PASSWORD = env(
+    'DJANGO_SUPERUSER_PASSWORD', default='defaultadminpassword!')
 
 # Application definition
 
@@ -128,11 +157,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-CORS_ORIGIN_WHITELIST = (
-    '0.0.0.0:4000',
-    'localhost:4000',
-)
 
 # Tell Django about the custom `User` model we created. The string
 # `authentication.User` tells Django we are referring to the `User` model in
