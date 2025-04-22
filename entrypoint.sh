@@ -1,18 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Waiting for database to be ready..."
-
-until python manage.py migrate --noinput; do
-    echo "Database not ready, retrying in 2 seconds..."
-    sleep 2
-done
-
-
 echo "Running collectstatic..."
 python manage.py collectstatic --noinput
 
 echo "Migrating database..."
+python manage.py makemigrations
 python manage.py migrate
 
 echo "Checking and creating superuser if necessary..."
@@ -25,4 +18,4 @@ python manage.py createsuperuser --noinput \
 
 echo "Starting Gunicorn server..."
 
-exec gunicorn conduit.wsgi:application --workers=3 --bind 0.0.0.0:8000
+exec gunicorn conduit.wsgi:application --worker-class gthread --bind 0.0.0.0:8000

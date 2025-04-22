@@ -19,9 +19,6 @@ COPY entrypoint.sh /app/entrypoint.sh
 # Make entrypoint.sh executable
 RUN chmod +x /app/entrypoint.sh
 
-# Collect static files (after copying project files)
-RUN python manage.py collectstatic --noinput
-
 # Expose the port that the app will run on
 EXPOSE 8000
 
