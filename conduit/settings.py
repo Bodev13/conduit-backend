@@ -9,23 +9,20 @@ https://docs.djangoproject.com/en/1.10/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
-import environ
+
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", default=False)
+DEBUG = os.getenv("DEBUG", default=False).lower() == "true"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost, 127.0.0.1").strip().split(",")
 
 #CORS_ORIGIN_WHITELIST = (
 #    '0.0.0.0:8282',
@@ -39,20 +36,13 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 
 
-FRONTEND_URLS = env("FRONTEND_URL", default="localhost").split(',')
-FRONTEND_PORT = env("FRONTEND_PORT", default="8282")
+FRONTEND_URLS = os.getenv("FRONTEND_URL", default="localhost").strip().split(',')
+FRONTEND_PORT = os.getenv("FRONTEND_PORT", default="8282")
 
 CORS_ORIGIN_WHITELIST = tuple(
-    f"http://{url.strip()}:{FRONTEND_PORT}" for url in FRONTEND_URLS
+    f"{url.strip()}:{FRONTEND_PORT}" for url in FRONTEND_URLS
 )
 
-
-DJANGO_SUPERUSER_USERNAME = env(
-    'DJANGO_SUPERUSER_USERNAME', default='admin_default')
-DJANGO_SUPERUSER_EMAIL = env(
-    'DJANGO_SUPERUSER_EMAIL', default='admin@example.com')
-DJANGO_SUPERUSER_PASSWORD = env(
-    'DJANGO_SUPERUSER_PASSWORD', default='defaultadminpassword!')
 
 # Application definition
 
@@ -76,6 +66,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -111,10 +102,26 @@ WSGI_APPLICATION = 'conduit.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("POSTGRES_DB"),
+        'USER': os.getenv("POSTGRES_USER"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
+        'HOST': os.getenv("POSTGRES_HOST"),
+        'PORT': os.getenv("POSTGRES_PORT", "5432"),
+        'OPTIONS': {
+            'client_encoding': 'UTF8',
+            'options': '-c timezone=UTC',
+        },
+
     }
 }
+
+#DATABASES = {
+#    'default': {
+#       'ENGINE': 'django.db.backends.sqlite3',
+#       'NAME': os.path.join(BASE_DIR, 'db_data/db.sqlite3'),
+#   }
+#}
 
 
 # Password validation
@@ -155,7 +162,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Tell Django about the custom `User` model we created. The string
 # `authentication.User` tells Django we are referring to the `User` model in
